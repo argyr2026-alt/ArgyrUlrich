@@ -1,7 +1,7 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-import { fmt, fmt2, kg, nq, mon, dec, r3, lineTotal, pctOf, norm } from "./shared/money.js";
-import { bc } from "./shared/barcode.js";
+import { fmt, fmt2, kg, nq, mon, dec, r3, lineTotal, pctOf, norm } from "./money.js";
+import { bc } from "./barcode.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
