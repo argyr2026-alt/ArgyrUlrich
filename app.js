@@ -1,7 +1,7 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-import { fmt, fmt2, kg, nq, mon, dec, r3, lineTotal, pctOf, norm } from "./money.js";
-import { bc } from "./barcode.js";
+import { fmt, fmt2, kg, nq, mon, dec, r3, lineTotal, pctOf, norm } from "./shared/money.js";
+import { bc } from "./shared/barcode.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -287,5 +287,28 @@ document.addEventListener("visibilitychange", async () => { if (document.visibil
 (async function boot() {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY || /TU-PROYECTO|PEGA/i.test(SUPABASE_URL + SUPABASE_ANON_KEY)) { document.body.classList.add("auth"); wr('<div class="card" style="max-width:520px;margin:20px auto"><h2>Falta configurar</h2><p class="hint">Abrí el archivo <b>config.js</b> y pegá la URL y la clave pública (anon / publishable) de tu proyecto de Supabase. Los pasos están en el README.</p></div>'); return; }
   sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+
+  // Escuchar cuando el usuario entra desde el link de invitación o recuperación de contraseña
+  const esInvitacion = window.location.hash.includes('type=invite');
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && esInvitacion)) {
+      const nuevaPassword = prompt("¡Bienvenido a ARGYR! Creá tu nueva contraseña (mínimo 6 caracteres):");
+
+      if (nuevaPassword && nuevaPassword.length >= 6) {
+        const { error } = await sb.auth.updateUser({ password: nuevaPassword });
+
+        if (error) {
+          alert("Error al guardar contraseña: " + error.message);
+        } else {
+          alert("¡Contraseña creada! Ya podés usar el sistema.");
+          window.history.replaceState({}, document.title, "/");
+          location.reload();
+        }
+      } else {
+        alert("La contraseña debe tener al menos 6 caracteres. Recargá la página para intentar de nuevo.");
+      }
+    }
+  });
+
   try { const { data } = await sb.auth.getSession(); if (!data.session) return vLogin(); USER = data.session.user; hv(); await bootAuthed(); } catch (e) { wr(`<div class="er" style="margin-top:0">${esc(errMsg(e))}</div><button class="btn" style="margin-top:12px" onclick="location.reload()">Reintentar</button>`); }
 })();
